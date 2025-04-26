@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_NAME=django_keycloak_db
+      - POSTGRES_USER=django_keycloak_user
+      - POSTGRES_PASSWORD=django_keycloak_password
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+    depends_on:
+      - db
+      - keycloak
+
+  db:
+    image: postgres:13
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=django_keycloak_db
+      - POSTGRES_USER=django_keycloak_user
+      - POSTGRES_PASSWORD=django_keycloak_password
+    ports:
+      - "5432:5432"
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_DB=postgres
+      - KC_DB_URL=jdbc:postgresql://db:5432/django_keycloak_db
+      - KC_DB_USERNAME=django_keycloak_user
+      - KC_DB_PASSWORD=django_keycloak_password
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    command:
+      - start-dev
+
+volumes:
+  postgres_data: 
